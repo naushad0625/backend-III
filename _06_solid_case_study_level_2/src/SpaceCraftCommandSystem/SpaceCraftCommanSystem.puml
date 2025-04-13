@@ -1,0 +1,84 @@
+@startuml
+interface ICommand {
+    + execute()
+}
+
+class Move {
+    + execute()
+}
+
+class Land {
+    + execute()
+}
+
+class Capture {
+    + execute()
+}
+
+interface ISpacecraft {
+    + setCommand(command: ICommand)
+    + executeCommand()
+}
+
+class Rover {
+    - command: ICommand
+    - executionManager: CommandExecutionManager
+    + setCommand()
+    + executeCommand()
+}
+
+class Satellite {
+    - command: ICommand
+    - executionManager: CommandExecutionManager
+    + setCommand()
+    + executeCommand()
+}
+
+class Lander {
+    - command: ICommand
+    - executionManager: CommandExecutionManager
+    + setCommand()
+    + executeCommand()
+}
+
+class SpaceCraftManager {
+    spaceCraft: ISpacecraft
+    command: ICommand
+    executionManager: CommandExecutionManager
+
+}
+
+class SpaceCraftFactory {
+    + create(): ISpacecraft
+}
+
+class CommandExecutionManager {
+    - logger: Logger
+    - validator: Validator
+    - simulator: Simulator
+    + log(command: ICommand): CommandExecutionManager
+    + validate(command: ICommand): CommandExecutionManager
+    + simulate(command: ICommand): CommandExecutionManager
+    + execute(command: ICommand)
+}
+
+ISpacecraft <|.up. Rover
+ISpacecraft <|.up. Satellite
+ISpacecraft <|.up. Lander
+
+ICommand <|.down. Move
+ICommand <|.down. Land
+ICommand <|.down. Capture
+
+ISpacecraft *.right. CommandExecutionManager
+
+ISpacecraft *.down. ICommand
+
+SpaceCraftFactory -right-> ISpacecraft: Creates
+
+SpaceCraftManager -up-> SpaceCraftFactory: uses
+SpaceCraftManager -up-> ISpacecraft: execute commands on
+SpaceCraftManager -up-> ICommand: uses
+SpaceCraftManager -down-> CommandExecutionManager: uses
+
+@enduml
