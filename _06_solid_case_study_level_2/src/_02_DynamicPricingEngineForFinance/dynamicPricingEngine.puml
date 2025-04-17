@@ -1,0 +1,233 @@
+'@startuml
+'title Derivative Pricing Engine Design
+'
+'interface PricingStrategy {
+'    +price(derivative, marketData)
+'}
+'
+'interface Validator {
+'    +validate(derivative)
+'}
+'
+'interface AuditLogger {
+'    +log(derivative, result)
+'}
+'
+'interface Cacheable {
+'    +cache(derivative: Derivative): void
+'    +getCache(key: String): Optional<Derivative>
+'}
+'
+'interface MarketDataAdapter {
+'    +fetchMarketData(derivative: Derivative): CompletableFuture<MarketData>
+'}
+'
+'interface IPricingEngine {
+'    +calculatePrice(marketData: MarketData): void
+'    +fetchMarketData(): CompletableFuture<MarketData>
+'    +performAudit(): void
+'    +performValidation(): CompletableFuture<Boolean>
+'    +writeToCache(): void
+'    +readFromCache(key: String): Optional<Derivative>
+'}
+'
+'interface PricingStrategy {
+'    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+'}
+'
+'interface PricingStartegyValidator {
+'    +validate(derivative: Derivative): CompletableFuture<Boolean>
+'}
+'
+'
+'' ====Classes====
+'
+'class OptionCache implements Cacheable {
+'    +cache(derivative: Derivative): void
+'    +getCache(key: String): Optional<Derivative>
+'    .. other methods ..
+'}
+'
+'class FutureCache implements Cacheable{
+'    +cache(derivative: Derivative): void
+'    +getCache(key: String): Optional<Derivative>
+'    .. other methods ..
+'}
+'
+'class Derivative {
+'    -assetType: AssetType
+'    -currency: String
+'    -tradeDate: Date
+'    -maturityDate: Date
+'    .. Other attributes ..
+'    .. getters/setters ..
+'}
+'
+'enum AssetType {
+'    OPTION
+'    SWAP
+'    FUTURE
+'    --
+'    -value: String
+'    +getValue(): String
+'}
+'
+'class OptionMarketDataAdapter implements MarketDataAdapter{
+'    +fetchMarketData(derivative: Derivative): CompletableFuture<MarketData>
+'}
+'
+'class OptionPricingEngine implements IPricingEngine {
+'    -pricingStrategy: PricingStrategy
+'    -cacheable: Cacheable
+'    -derivative: Derivative
+'    -marketDataAdapter: MarketDataAdapter
+'    -validator: PricingStartegyValidator
+'    -auditable: Auditable
+'    +calculatePrice(marketData: MarketData): void
+'    +fetchMarketData(): CompletableFuture<MarketData>
+'    +performAudit(): void
+'    +performValidation(): CompletableFuture<Boolean>
+'    +writeToCache(): void
+'    +readFromCache(key: String): Optional<Derivative>
+'}
+'
+'class PricingEngineFactory {
+'    +create(assetType: String): IPricingEngine
+'}
+'
+'class OptionPricingStrategy implements PricingStrategy{
+'    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+'}
+'
+'class FuturePricingStrategy implements PricingStrategy {
+'    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+'}
+'
+'class SwapPricingStrategy implements PricingStrategy {
+'    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+'}
+'
+'class OptionValidator implements PricingStartegyValidator{
+'    +validate(derivative: Derivative): CompletableFuture<Boolean>
+'}
+'
+'class DynamicPricingEngine {
+'    +main(args: String[]): void
+'}
+'
+'OptionCache --> Derivative : uses
+'Cacheable --> Derivative : uses
+'Derivative --> AssetType
+'
+'MarketDataAdapter --> Derivative : uses
+'MarketDataAdapter --> MarketData : returns
+'OptionMarketDataAdapter --> Derivative : uses
+'OptionMarketDataAdapter --> MarketData : returns
+'
+'OptionPricingEngine -right-> PricingStrategy : uses
+'OptionPricingEngine -right-> Cacheable : uses
+'OptionPricingEngine -right-> Derivative : uses
+'OptionPricingEngine -right-> MarketDataAdapter : uses
+'OptionPricingEngine -right-> PricingStartegyValidator : uses
+'OptionPricingEngine -right-> Auditable : uses
+'
+'PricingEngineFactory -left-> IPricingEngine : creates
+'PricingEngineFactory -left-> PricingStrategy : creates
+'PricingEngineFactory -left-> Cacheable : creates
+'PricingEngineFactory -left-> Derivative : creates
+'PricingEngineFactory -left-> MarketDataAdapter : creates
+'PricingEngineFactory -left-> PricingStartegyValidator : creates
+'PricingEngineFactory -left-> Auditable : creates
+'
+'DynamicPricingEngine -down-> IPricingEngine : uses
+'DynamicPricingEngine -right-> PricingEngineFactory : creates
+'
+
+@startuml
+' Define the direction of the layout
+left to right direction
+
+' ===== Cacheable Interface and Implementation =====
+interface Cacheable {
+    +cache(derivative: Derivative): void
+    +getCache(key: String): Optional<Derivative>
+}
+
+class OptionCache {
+    +cache(derivative: Derivative): void
+    +getCache(key: String): Optional<Derivative>
+}
+
+Cacheable <|-- OptionCache
+
+' ===== PricingStrategy Interface and Implementations =====
+interface PricingStrategy {
+    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+}
+
+class OptionPricingStrategy {
+    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+}
+
+class FuturePricingStrategy {
+    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+}
+
+class SwapPricingStrategy {
+    +calculatePrice(derivative: Derivative, marketData: MarketData): double
+}
+
+PricingStrategy <|-- OptionPricingStrategy
+PricingStrategy <|-- FuturePricingStrategy
+PricingStrategy <|-- SwapPricingStrategy
+
+' ===== IPricingEngine Interface and OptionPricingEngine Implementation =====
+interface IPricingEngine {
+    +calculatePrice(marketData: MarketData): void
+    +fetchMarketData(): CompletableFuture<MarketData>
+    +performAudit(): void
+    +performValidation(): CompletableFuture<Boolean>
+    +writeToCache(): void
+    +readFromCache(key: String): Optional<Derivative>
+}
+
+class OptionPricingEngine {
+    -pricingStrategy: PricingStrategy
+    -cacheable: Cacheable
+    -derivative: Derivative
+    -marketDataAdapter: MarketDataAdapter
+    -validator: PricingStartegyValidator
+    -auditable: Auditable
+    +calculatePrice(marketData: MarketData): void
+    +fetchMarketData(): CompletableFuture<MarketData>
+    +performAudit(): void
+    +performValidation(): CompletableFuture<Boolean>
+    +writeToCache(): void
+    +readFromCache(key: String): Optional<Derivative>
+}
+
+IPricingEngine <|-- OptionPricingEngine
+
+' ===== Other Components (e.g., Validator, Factory, etc.) =====
+class PricingEngineFactory {
+    +create(assetType: String): IPricingEngine
+}
+
+class Derivative {
+    -assetType: AssetType
+    -currency: String
+    -tradeDate: Date
+    -maturityDate: Date
+    .. getters/setters ..
+}
+
+class MarketData {
+}
+
+' ===== Relationships =====
+PricingEngineFactory --> IPricingEngine : creates
+PricingEngineFactory --> OptionPricingEngine : creates
+
+@enduml
+
+'@enduml

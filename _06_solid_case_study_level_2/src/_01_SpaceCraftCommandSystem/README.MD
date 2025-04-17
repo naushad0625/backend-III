@@ -36,4 +36,5 @@
     <tr>
 
 </table>
-<br/>
+<h3>Class Diagram:</h3>
+<img src="diagrams/class_diagram.png" >
