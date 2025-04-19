@@ -1,0 +1,30 @@
+@startuml
+interface Eventable {
+    + getEventType(): String
+}
+
+interface GameEventListener {
+    + handle(event: Eventable): void
+}
+
+class GameEventDispatcher {
+    - listeners: Map<String, ArrayList<GameEventListener>>
+    + addListener(key: String, listener: GameEventListener): void
+    + removeListener(key: String, listener: GameEventListener): void
+    + fire(eventType: String, event: Eventable): void
+}
+
+class EventQueue {
+    - queue: Queue<Eventable>
+    - dispatcher: GameEventDispatcher
+    - maxEventsPerTick: int
+    + EventQueue(dispatcher: GameEventDispatcher, maxEventsPerTick: int)
+    + post(event: Eventable): void
+    + process(): void
+}
+
+EventQueue -right-> GameEventDispatcher : uses
+EventQueue --> Eventable : holds
+GameEventDispatcher --> GameEventListener : dispatches to
+GameEventListener <|.. Eventable : handles
+@enduml
