@@ -1,0 +1,45 @@
+@startuml
+interface IState {
+    +getName(): String
+    +handle(article: Article, userRole: String, policy: RolePolicy): void
+}
+
+class DraftedState {
+    +getName(): String
+    +handle(article: Article, userRole: String, policy: RolePolicy): void
+}
+
+class ReviewedState {
+    +getName(): String
+    +handle(article: Article, userRole: String, policy: RolePolicy): void
+}
+
+enum States {
+    DRAFTED
+    REVIEWED
+    APPROVED
+    +getState(): String
+}
+
+class Article {
+    -state: IState
+    +getState(): IState
+    +setState(state: IState): void
+    +process(userRole: String, policy: RolePolicy): void
+}
+
+class RolePolicy {
+    -roles: Map<String, List<String>>
+    +addPolicy(state: String, allowedRoles: ArrayList<String>): void
+    +isAllowed(state: String, role: String): boolean
+}
+
+IState <|.down. DraftedState
+IState <|.right. ReviewedState
+Article --> IState
+DraftedState -down-> States
+ReviewedState -left-> States
+Article --> RolePolicy : uses
+RolePolicy --> "Map<String, List<String>>" : contains
+
+@enduml
