@@ -1,0 +1,104 @@
+@startuml
+
+interface Job {
+    +execute()
+}
+
+class JobContext {
+    -LifecycleState state
+    -RuntimeEnv runtimeEnv
+    -JobAllocatedResource jobAllocatedResource
+    -FailureStrategy failureStrategy
+
+    +JobContext(state: LifecycleState, runtimeEnv: RuntimeEnv, jobAllocatedResource: JobAllocatedResource, failureStrategy: FailureStrategy)
+    +getState(): String
+    +getRuntime(): RuntimeEnv
+    +getAllocatedResource(): JobAllocatedResource
+    +getFailureStartegy(): FailureStrategy
+    +updateState(state: LifecycleState)
+}
+
+class DataSyncJob {
+    -JobContext jobContext
+    +execute()
+}
+
+class ReportGenerationJob {
+    -JobContext jobContext
+    +execute()
+}
+
+Job <|-- DataSyncJob
+Job <|-- ReportGenerationJob
+
+DataSyncJob --> JobContext : uses
+ReportGenerationJob --> JobContext : uses
+
+abstract class LifecycleState {
+    #String state
+    +getState(): String
+}
+
+class Ready {
+    +Ready()
+    +getState(): String
+}
+
+class Running {
+    +Running()
+    +getState(): String
+}
+
+class Suspended {
+    +Suspended()
+    +getState(): String
+}
+
+LifecycleState <|-- Ready
+LifecycleState <|-- Running
+LifecycleState <|-- Suspended
+
+class LogData {
+}
+
+class LoggingService {
+    +log(data: LogData)
+}
+
+LoggingService --> LogData : uses
+
+' Existing Failure Strategies
+
+interface FailureStrategy {
+    +handle(JobContext job)
+}
+
+class Escalate {
+    +handle(JobContext job)
+}
+
+class Alert {
+    +handle(JobContext job)
+}
+
+class Retry {
+    +handle(JobContext job)
+}
+
+FailureStrategy <|-- Escalate
+FailureStrategy <|-- Alert
+FailureStrategy <|-- Retry
+
+class JobAllocatedResource {
+}
+
+class RuntimeEnv {
+}
+
+' Associations
+JobContext --> LifecycleState : uses
+JobContext --> RuntimeEnv : uses
+JobContext --> JobAllocatedResource : uses
+JobContext --> FailureStrategy : uses
+
+@enduml
