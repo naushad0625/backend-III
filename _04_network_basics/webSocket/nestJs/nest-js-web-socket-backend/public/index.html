@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <h1>Chat Client</h1>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="registration">
+        <input id="userName" type="text" placeholder="Enter userName" />
+        <button onclick="connect()">Connect</button>
+    </div>
+    <div id="user" style="display: none;">
+
+    </div>
+    <div id="chatUI" , style="display: none;">
+        <h2>Channels</h2>
+        <input id="channel" type="text" placeholder="Create new channel">
+        <button onclick="join()">Join</button>
+        <button onclick="leave()">Leave</button>
+
+        <h3>Active Channels</h3>
+        <ul id="channels"></ul>
+    </div>
+    <div id="chatTabs" style="display: none;">
+        <div id="tabButtons">
+            <!-- Tabs will be added here -->
+        </div>
+
+        <div id="tabContents">
+            <!-- Message views per tab -->
+        </div>
+
+        <input id="messageInput" placeholder="Type a message" />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        let socket;
+        let userName = "";
+
+        let activeTab = 'public';
+        const joinedChannels = new Set();
+
+        function createTab(name) {
+            if (document.getElementById(`tab-${name}`)) return;
+
+            // Tab button
+            const btn = document.createElement('button');
+            btn.innerText = name;
+            btn.onclick = () => switchTab(name);
+            btn.id = `tab-${name}`;
+            document.getElementById('tabButtons').appendChild(btn);
+
+            // Message container
+            const content = document.createElement('div');
+            content.id = `messages-${name}`;
+            content.style.display = 'none';
+            document.getElementById('tabContents').appendChild(content);
+        }
+
+        function switchTab(name) {
+            // Reset all tab buttons
+            document.querySelectorAll('#tabButtons > button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Highlight selected tab
+            document.getElementById(`tab-${name}`).classList.add('active');
+
+            // Hide all
+            document.querySelectorAll('#tabContents > div').forEach(div => {
+                div.style.display = 'none';
+            });
+            // Show selected
+            document.getElementById(`messages-${name}`).style.display = 'block';
+
+            activeTab = name;
+        }
+
+        function appendMessage(tab, text) {
+            const container = document.getElementById(`messages-${tab}`);
+            const msg = document.createElement('div');
+            msg.innerText = text;
+            container.appendChild(msg);
+        }
+
+        function connect() {
+            userName = document.getElementById("userName").value;
+            if (!userName) return alert("Please enter userName");
+
+            socket = io("http://localhost:3001", {
+                query: {
+                    userName: userName
+                }
+            })
+
+            socket.on("connect", () => {
+                alert(`User '${userName}' connected`);
+                document.getElementById('registration').style.display = "none";
+                document.getElementById('user').innerHTML = `<h2>${userName}</h2>`;
+                document.getElementById('user').style.display = "block";
+                document.getElementById('chatUI').style.display = "block";
+
+                createTab('public');
+                switchTab('public');
+                document.getElementById('chatTabs').style.display = "block";
+            })
+
+            socket.on('joined', (payload) => {
+                const channel = payload.channel;
+                createTab(channel);
+                switchTab(channel);
+                joinedChannels.add(channel);
+                appendMessage(channel, `User '${payload.user} has joined channel '${channel}'`)
+            })
+
+            socket.on('leaved', (payload) => {
+                const { channel, user } = payload;
+                if (userName === user) {
+                    joinedChannels.delete(channel);
+                }
+                appendMessage(channel, `User '${user} has taken leave from channel '${channel}'`)
+            })
+
+            socket.on('message', (payload) => {
+                const { channel, message } = payload;
+                const user = payload.from;
+
+                switchTab(channel);
+                appendMessage(channel, `${user} --> ${message}`);
+            })
+        }
+
+        function join() {
+            const inputElement = document.getElementById('channel')
+            const channel = inputElement.value;
+            if (!channel) return;
+
+            inputElement.value = '';
+            socket.emit("JoinIntoChannel", channel);
+        }
+
+        function leave() {
+            const input = document.getElementById('channel');
+            const channel = input.value;
+            socket.emit('LeaveChannel', channel);
+            input.value = '';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value;
+            const channel = activeTab;
+            const event = channel === 'public' ? 'PublicMessage' : 'ChannelMessage';
+            console.log(message, event, channel);
+            socket.emit(event, { channel, message });
+            input.value = '';
+        }
+
+    </script>
+</body>
+
+</html>

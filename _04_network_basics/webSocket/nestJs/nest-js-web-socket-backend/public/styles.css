@@ -1,0 +1,15 @@
+#tabButtons button {
+  border: none;
+  padding: 6px 12px;
+  margin-right: 4px;
+  cursor: pointer;
+  background: #f0f0f0;
+  color: gray;
+  border-radius: 6px;
+}
+
+#tabButtons button.active {
+  background: #ffd580;
+  color: black;
+  font-weight: bold;
+}
